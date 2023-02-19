@@ -605,7 +605,7 @@ local isinjail = false
 function jailyourass(source)
 	local dict = 'random@mugging3'
 	local wantedlevel = (GetPlayerWantedLevel(PlayerId()))
-	local jailtime = wantedlevel * 86400000
+	local jailtime = wantedlevel * 36000000
 	FreezeEntityPosition(PlayerPedId(), true)
     RequestAnimDict(dict)
     Citizen.Wait(200)
