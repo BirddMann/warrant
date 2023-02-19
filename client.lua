@@ -151,14 +151,10 @@ function GetAllVehicles()
     return vehicles
 end
 
--- NPC Modifications/Ambiance
+-- NPC Modifications
 Citizen.CreateThread(function()
 	while true do
-		Citizen.Wait(500)
-		StartAudioScene('CHARACTER_CHANGE_IN_SKY_SCENE')
-		SetAudioFlag("PoliceScannerDisabled", true)
-		AddRelationshipGroup('Prisonnpcs')
-		AddRelationshipGroup('Players')
+		Citizen.Wait(750)
 		local playerPed = GetPlayerPed(-1)
 		local playerPed2 = PlayerId()
 		local pCoords = GetEntityCoords(playerPed, true)
@@ -167,16 +163,8 @@ Citizen.CreateThread(function()
 				local tCoords = GetEntityCoords(Ped, true)
 				local incar = IsPedInAnyVehicle(playerPed, false)
 				local pedtype = GetPedType(Ped, false)
-				--Give Weapons to Peds and modify NPC accuracy
-				if GetDistanceBetweenCoords(pCoords.x, pCoords.y, pCoords.z, tCoords.x, tCoords.y, tCoords.z, true) <= 100.0 and pedtype ~= 6 then 
-					local chance = math.random(1,50)
-					if chance == 1 then
-						GiveWeaponToPed(Ped, GetHashKey("WEAPON_HEAVYPISTOL"), 40, false, false)
-						SetPedAccuracy(Ped, 10)
-					end
-				end
-				--Give Stunguns to Cops if Wanted < 2 and modify NPC police accuracy
 				if GetDistanceBetweenCoords(pCoords.x, pCoords.y, pCoords.z, tCoords.x, tCoords.y, tCoords.z, true) <= 100.0 then 
+					--Give Weapons to Peds / modify NPC accuracy
 					if pedtype == 6 then
 						SetPedAccuracy(Ped, 15)
 						local wantedlevel = GetPlayerWantedLevel(playerPed2)
@@ -185,12 +173,14 @@ Citizen.CreateThread(function()
 							SetCurrentPedWeapon(Ped, GetHashKey("WEAPON_STUNGUN_MP"), 120, true)
 						end
 					end
-				end
-				--Calm Prison NPCs
-				if GetDistanceBetweenCoords(tCoords.x, tCoords.y, tCoords.z, 1690.79, 2565.38, 45.91, true) <= 125.0 then 
-					SetPedRelationshipGroupHash(playerPed, 'Players')
-					SetPedRelationshipGroupHash(Ped, 'Prisonnpcs')
-					SetRelationshipBetweenGroups(3, 'Players', 'Prisonnpcs')
+					--Give Weapon Stungun to Cops if Wanted < 2 / modify NPC police accuracy
+					if pedtype ~= 6 then 
+						local chance = math.random(1,50)
+						if chance == 1 then
+							GiveWeaponToPed(Ped, GetHashKey("WEAPON_HEAVYPISTOL"), 40, false, false)
+							SetPedAccuracy(Ped, 10)
+						end
+					end
 				end
 			end
 		end
@@ -631,7 +621,6 @@ function jailyourass(source)
 	Citizen.Wait(3000)
 	SetPlayerWantedLevel(PlayerId(), 0, false)
 	SetPlayerWantedLevelNow(PlayerId(), false)
-	SetMaxWantedLevel(0)
 	TriggerServerEvent('warrant:removewanted')
 	TriggerServerEvent('warrant:recordjailtime', jailtime)
 	exports['mythic_notify']:SendAlert("success", 'Warrants Cleared')
@@ -695,7 +684,6 @@ AddEventHandler('warrant:checkjailreturn', function(data)
 		isinjail = true
 		if isoutofjail then
 			ESX.ShowNotification("In ~r~Jail")
-			SetMaxWantedLevel(0)
 			Citizen.Wait(3000)
 			isoutofjail = false
 			local player = PlayerPedId()
@@ -773,13 +761,33 @@ AddEventHandler('warrant:checkjailwhileinjailreturn', function(data)
 		Wait(200)
 		ExecuteCommand('clothes')
 		exports['mythic_notify']:SendAlert("success", 'Bye!')
-		SetMaxWantedLevel(5)
 		surrendered = false
 		jtime = 0 
 		TriggerServerEvent('warrant:updatejailtime', jtime)
 		isoutofjail = true
 		isinjail = false
 		jailed = false
+	end
+end)
+
+--Jail Ambiance
+Citizen.CreateThread(function()
+	while true do
+		Citizen.Wait(2000)
+		AddRelationshipGroup('Prisonnpcs')
+		AddRelationshipGroup('Players')
+		local playerPed = GetPlayerPed(-1)
+		local tCoords = GetEntityCoords(playerPed, true)
+		if GetDistanceBetweenCoords(tCoords.x, tCoords.y, tCoords.z, 1690.79, 2565.38, 45.91, true) <= 150.0 then 
+			StartAudioScene('CHARACTER_CHANGE_IN_SKY_SCENE')
+			SetAudioFlag("PoliceScannerDisabled", true)
+			for Ped in EnumeratePeds() do
+				local pedtype = GetPedType(Ped)
+				SetPedRelationshipGroupHash(Ped, 'Prisoners')
+				SetPedRelationshipGroupHash(playerPed, 'Prisonnpcs')
+				SetRelationshipBetweenGroups(3, 'Players', 'Prisonnpcs')
+			end
+		end
 	end
 end)
 
