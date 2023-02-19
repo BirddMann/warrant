@@ -151,43 +151,47 @@ function GetAllVehicles()
     return vehicles
 end
 
--- NPC Modifications 
+-- NPC Modifications/Ambiance
 Citizen.CreateThread(function()
 	while true do
 		Citizen.Wait(500)
+		StartAudioScene('CHARACTER_CHANGE_IN_SKY_SCENE')
+		SetAudioFlag("PoliceScannerDisabled", true)
+		AddRelationshipGroup('Prisonnpcs')
+		AddRelationshipGroup('Players')
 		local playerPed = GetPlayerPed(-1)
 		local playerPed2 = PlayerId()
 		local pCoords = GetEntityCoords(playerPed, true)
 		for Ped in EnumeratePeds() do
-			local tCoords = GetEntityCoords(Ped, true)
-			local incar = IsPedInAnyVehicle(playerPed, false)
-			local pedtype = GetPedType(Ped, false)
-			--Give Weapons to Peds and modify NPC accuracy
-			if GetDistanceBetweenCoords(pCoords.x, pCoords.y, pCoords.z, tCoords.x, tCoords.y, tCoords.z, true) <= 100.0 then 
-				if Ped ~= playerPed and Ped ~= playerPed2 and pedtype ~= 6 then 
+			if Ped ~= playerPed and Ped ~= playerPed2 then 
+				local tCoords = GetEntityCoords(Ped, true)
+				local incar = IsPedInAnyVehicle(playerPed, false)
+				local pedtype = GetPedType(Ped, false)
+				--Give Weapons to Peds and modify NPC accuracy
+				if GetDistanceBetweenCoords(pCoords.x, pCoords.y, pCoords.z, tCoords.x, tCoords.y, tCoords.z, true) <= 100.0 and pedtype ~= 6 then 
 					local chance = math.random(1,50)
 					if chance == 1 then
 						GiveWeaponToPed(Ped, GetHashKey("WEAPON_HEAVYPISTOL"), 40, false, false)
 						SetPedAccuracy(Ped, 10)
 					end
 				end
-			end
-			--Give Stunguns to Cops if Wanted < 2 and modify NPC police accuracy
-			if GetDistanceBetweenCoords(pCoords.x, pCoords.y, pCoords.z, tCoords.x, tCoords.y, tCoords.z, true) <= 100.0 then 
-				if pedtype == 6 then
-					SetPedAccuracy(Ped, 15)
-					local wantedlevel = GetPlayerWantedLevel(playerPed2)
-					if wantedlevel == 1 or wantedlevel == 2 then
-						GiveWeaponToPed(Ped, GetHashKey("WEAPON_STUNGUN_MP"), 120, false, false)
-						SetCurrentPedWeapon(Ped, GetHashKey("WEAPON_STUNGUN_MP"), 120, true)
+				--Give Stunguns to Cops if Wanted < 2 and modify NPC police accuracy
+				if GetDistanceBetweenCoords(pCoords.x, pCoords.y, pCoords.z, tCoords.x, tCoords.y, tCoords.z, true) <= 100.0 then 
+					if pedtype == 6 then
+						SetPedAccuracy(Ped, 15)
+						local wantedlevel = GetPlayerWantedLevel(playerPed2)
+						if wantedlevel == 1 or wantedlevel == 2 then
+							GiveWeaponToPed(Ped, GetHashKey("WEAPON_STUNGUN_MP"), 120, false, false)
+							SetCurrentPedWeapon(Ped, GetHashKey("WEAPON_STUNGUN_MP"), 120, true)
+						end
 					end
 				end
-			end
-			--Calm Prison NPCs
-			if GetDistanceBetweenCoords(tCoords.x, tCoords.y, tCoords.z, 1690.79, 2565.38, 45.91, true) <= 150.0 then 
-				SetPedRelationshipGroupHash(Ped, 'Prisoners')
-				SetPedRelationshipGroupHash(playerPed, 'Prisonnpcs')
-				SetRelationshipBetweenGroups(3, 'Players', 'Prisonnpcs')
+				--Calm Prison NPCs
+				if GetDistanceBetweenCoords(tCoords.x, tCoords.y, tCoords.z, 1690.79, 2565.38, 45.91, true) <= 125.0 then 
+					SetPedRelationshipGroupHash(playerPed, 'Players')
+					SetPedRelationshipGroupHash(Ped, 'Prisonnpcs')
+					SetRelationshipBetweenGroups(3, 'Players', 'Prisonnpcs')
+				end
 			end
 		end
     end
@@ -593,19 +597,6 @@ Citizen.CreateThread(function()
 	end
 end)
 
---Ambiance
-Citizen.CreateThread(function()
-	while true do
-		Citizen.Wait(2000)
-		StartAudioScene('CHARACTER_CHANGE_IN_SKY_SCENE')
-		SetAudioFlag("PoliceScannerDisabled", true)
-		AddRelationshipGroup('Prisonnpcs')
-		AddRelationshipGroup('Players')
-		local playerPed = GetPlayerPed(-1)
-		local tCoords = GetEntityCoords(playerPed, true)
-	end
-end)
-
 --Jail Function
 local enable = false
 local heading = 360.00
@@ -911,8 +902,8 @@ Citizen.CreateThread(function()
 				isWorking = true
 				TaskStartScenarioInPlace(PlayerPedId(), currentJob.scenario, 0, true)
 				--workOut()
-				exports['progressBars']:startUI(20000, "Working...")
-				Citizen.Wait(20000)
+				exports['progressBars']:startUI(10000, "Working...")
+				Citizen.Wait(10000)
 				ClearPedTasksImmediately(PlayerPedId())
 				FreezeEntityPosition(PlayerPedId(), false)
 				SetEntityCollision(PlayerPedId(), true, true)
